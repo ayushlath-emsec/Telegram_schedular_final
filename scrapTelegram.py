@@ -128,6 +128,7 @@ async def telegram_scrap_func(url,_id):
                 count+=1
         else:
             print("Channel already scrapped upto date")
+            break
             return           
     # inserting
     print(count)
