@@ -12,6 +12,8 @@ from telethon.errors.rpcerrorlist import PhoneNumberInvalidError
 from telethon.tl.types import InputPeerUser
 import csv
 import asyncio
+import re
+from deep_translator import GoogleTranslator
 
 def scrapSuccess(func):
     collection.update_one({"url":func},{'$set':{"isUrgent":False,"status":"done","time":datetime.now(),"failedCount" : 0}})
@@ -25,6 +27,17 @@ CreatedDate = now.strftime("%d/%m/%y %H:%M:%S")
 CreatedDate = datetime.strptime(CreatedDate,"%d/%m/%y %H:%M:%S")
 CreatedDate = datetime.timestamp(CreatedDate)
 # add your function here 
+
+
+def translator1(text):
+        cleaned_chunks = []
+        chunks = re.split('[.]', text)
+        for chunk in chunks:
+            if len(chunk.split( ))>3:
+                translation = GoogleTranslator(source='auto', target='en').translate(chunk)
+                cleaned_chunks.append(translation)
+              
+        return " ".join(cleaned_chunks)
 
 async def telegram_scrap_func(url,_id):
     api_id = 23638228
@@ -132,14 +145,16 @@ async def telegram_scrap_func(url,_id):
     # inserting
     print(count)
     await client.disconnect()
-    data = {'channel_id':channel_id,'chat':chat,'user_id':user_Id,'media_link':media_link,"is_media":media1_status,'chat_ID': chat_ID,'chat_Date': chat_Date,'createdAt':int(createdAt_date)}
+    data = {'channel_id':channel_id,'original_chat':chat,'user_id':user_Id,'media_link':media_link,"is_media":media1_status,'chat_ID': chat_ID,'chat_Date': chat_Date,'createdAt':int(createdAt_date)}
     df1 = pd.DataFrame(data)
     print(df1)
+    df1 = df1.fillna('None')
+    df1["chat"]=df1['original_chat'].apply(translator1)
     docs = df1.to_dict('records')
     collection1.insert_many(docs)
 
     if len(chat_Date)>0 and channel_creation_date[0]!=None:
-        collection.update_one({"_id":ObjectId(_id)},{ "$set": { 'channel_id':channel.id,'channel_name':channel.title,'total_user':channel.participants_count,'channel_username':channel.username,'is_group':channel.megagroup,'channel_creation_date':channel_creation_date[0],"last_scrap_id":chat_ID[0]}})
+        collection.update_one({"_id":ObjectId(_id)},{ "$set": { 'channel_id':channel.id,'channel_name':channel.title,'total_user':channel.participants_count,'channel_username':channel.username,'is_group':channel.megagroup,'channel_creation_date':channel_creation_date[-1],"last_scrap_id":chat_ID[0]}})
     elif channel_creation_date[0]==None:
         collection.update_one({"_id":ObjectId(_id)},{ "$set": { 'channel_id':channel.id,'channel_name':channel.title,'total_user':channel.participants_count,'channel_username':channel.username,'is_group':channel.megagroup,"last_scrap_id":chat_ID[0]}})
     print("Data Inserted!!")
