@@ -74,6 +74,7 @@ async def telegram_scrap_func(url,_id):
     chat_ID=[]
     user_Id=[]
     channel_creation_date=[]
+    translated_chat = []
     count=0
     doc = collection.find_one({'_id':ObjectId(_id)})
     try:
@@ -130,6 +131,10 @@ async def telegram_scrap_func(url,_id):
                     user_Id.append(None)
                     
                 chat.append(user_chat)
+                try:
+                    translated_chat.append(translator1(user_chat))
+                except:
+                    translated_chat.append(user_chat)
                 media_link.append(user_media_link)
                 media1_status.append(media1)         
                 channel_id.append(channel.id)
@@ -145,11 +150,9 @@ async def telegram_scrap_func(url,_id):
     # inserting
     print(count)
     await client.disconnect()
-    data = {'channel_id':channel_id,'original_chat':chat,'user_id':user_Id,'media_link':media_link,"is_media":media1_status,'chat_ID': chat_ID,'chat_Date': chat_Date,'createdAt':int(createdAt_date)}
+    data = {'channel_id':channel_id,'original_chat':chat,'chat':translated_chat,'user_id':user_Id,'media_link':media_link,"is_media":media1_status,'chat_ID': chat_ID,'chat_Date': chat_Date,'createdAt':createdAt_date}
     df1 = pd.DataFrame(data)
     print(df1)
-    df1 = df1.fillna('None')
-    df1["chat"]=df1['original_chat'].apply(translator1)
     docs = df1.to_dict('records')
     collection1.insert_many(docs)
 
