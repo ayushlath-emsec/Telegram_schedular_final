@@ -33,10 +33,12 @@ def translator1(text):
         cleaned_chunks = []
         chunks = re.split('[.]', text)
         for chunk in chunks:
-            if len(chunk.split( ))>3:
-                translation = GoogleTranslator(source='auto', target='en').translate(chunk)
-                cleaned_chunks.append(translation)
-              
+            try:
+                if len(chunk.split( ))>3:
+                    translation = GoogleTranslator(source='auto', target='en').translate(chunk)
+                    cleaned_chunks.append(translation)
+            except:
+                cleaned_chunks.append(chunk)
         return " ".join(cleaned_chunks)
 
 async def telegram_scrap_func(url,_id):
